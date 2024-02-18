@@ -7,13 +7,13 @@ class Game
   attr_reader :secret_word
 
   def initialize
+    intro
     @secret_word = Wordlist.random_word './vocab.txt'
     @player_guess = '_' * secret_word.length # Initial player guess is none correct
     @round = 1
   end
 
   def play
-    intro
     until round == 9
       puts "Round #{round}:"
       puts "Mystery word: #{display_player_guess}\n\n"
@@ -47,4 +47,18 @@ class Wordlist
   end
 end
 
-Game.new.play
+# extending string to incorporate several specific methods
+class String
+  def char_ind_hash
+    arr = split('')
+    hash = {}
+    arr.each_with_index do |char, ind|
+      hash[char] ||= []
+      hash[char].push(ind)
+    end
+    hash
+  end
+end
+
+game = Game.new
+p game.secret_word, game.secret_word.char_ind_hash
