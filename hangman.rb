@@ -13,6 +13,10 @@ class Game
 
   def play
     intro
+    8.times do |i|
+      puts "Round #{i + 1}:"
+      puts "Mystery word: #{display_player_guess}\n\n"
+    end
   end
 
   def intro
@@ -21,7 +25,16 @@ class Game
     puts 'You will have eight rounds.'
     puts 'You can either guess a letter in the word, or the whole word itself.'
     puts 'If your letter guess is right, we will reveal to you where the letters reside in the word.'
-    puts 'If you choose to guess a word and you are able to guess correctly, you are free immediately.'
+    puts "If you choose to guess a word and you are able to guess correctly, you are free immediately.\n\n"
+  end
+
+  def display_player_guess
+    player_guess_array = player_guess.split('')
+    to_display = ''
+    player_guess_array.each do |char|
+      to_display += "#{char} "
+    end
+    to_display
   end
 end
 
