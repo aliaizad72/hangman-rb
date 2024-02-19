@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
+require 'pry-byebug'
+
 # serves as the class that holds the game states
 class Game
   attr_accessor :player_guess, :round
 
-  attr_reader :secret_word
+  attr_reader :secret_word, :secret_word_chars
 
   def initialize
     intro
@@ -14,9 +16,12 @@ class Game
   end
 
   def play
-    until round == 9
+    until round == 9 || player_guess == secret_word
       puts "Round #{round}:"
       puts "Mystery word: #{display_player_guess}\n\n"
+      print 'Enter your guess: '
+      char = gets.chomp
+      @player_guess = guess_char_replace(@player_guess, char)
       @round += 1
     end
   end
@@ -31,12 +36,24 @@ class Game
   end
 
   def display_player_guess
-    player_guess_array = player_guess.split('')
+    player_guess_array = @player_guess.split('')
     to_display = ''
     player_guess_array.each do |char|
       to_display += "#{char} "
     end
     to_display
+  end
+
+  def guess_char_replace(string, char)
+    return string unless secret_word.char_index_map.keys.include?(char)
+
+    ind_array = secret_word.char_index_map[char]
+    str_array = string.split('')
+
+    ind_array.each do |ind|
+      str_array[ind] = char
+    end
+    str_array.join('')
   end
 end
 
@@ -49,7 +66,7 @@ end
 
 # extending string to incorporate several specific methods
 class String
-  def char_ind_hash
+  def char_index_map
     arr = split('')
     hash = {}
     arr.each_with_index do |char, ind|
@@ -60,5 +77,4 @@ class String
   end
 end
 
-game = Game.new
-p game.secret_word, game.secret_word.char_ind_hash
+Game.new.play
