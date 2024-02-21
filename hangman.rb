@@ -1,27 +1,23 @@
 # frozen_string_literal: true
 
-require 'pry-byebug'
-
 # serves as the class that holds the game states
 class Game
-  attr_accessor :player_guess, :round
+  attr_accessor :round
 
-  attr_reader :secret_word, :secret_word_chars
+  attr_reader :secret_word, :player
 
   def initialize
-    intro
     @secret_word = Wordlist.random_word './vocab.txt'
-    @player_guess = '_' * secret_word.length # Initial player guess is none correct
+    @player = Player.new(secret_word)
+    intro
     @round = 1
   end
 
   def play
-    until round == 9 || player_guess == secret_word
+    until round == 9 || player.guess == secret_word
       puts "Round #{round}:"
-      puts "Mystery word: #{display_player_guess}\n\n"
-      print 'Enter your guess: '
-      char = gets.chomp
-      @player_guess = guess_char_replace(@player_guess, char)
+      puts "Mystery word: #{player.guess_display}\n\n"
+      player.update_guess
       @round += 1
     end
   end
@@ -34,26 +30,42 @@ class Game
     puts 'If your letter guess is right, we will reveal to you where the letters reside in the word.'
     puts "If you choose to guess a word and you are able to guess correctly, you are free immediately.\n\n"
   end
+end
 
-  def display_player_guess
-    player_guess_array = @player_guess.split('')
-    to_display = ''
-    player_guess_array.each do |char|
-      to_display += "#{char} "
-    end
-    to_display
+# serves as a class that handles all player-related interactions
+class Player
+  attr_accessor :guess
+
+  attr_reader :name, :word
+
+  def initialize(word)
+    @name = ask_name
+    @word = word
+    @guess = '_' * word.length # Initial player guess is none correct
   end
 
-  def guess_char_replace(string, char)
-    return string unless secret_word.char_index_map.keys.include?(char)
+  def ask_name
+    print 'Prisoner, enter your name: '
+    gets.chomp
+  end
 
-    ind_array = secret_word.char_index_map[char]
-    str_array = string.split('')
+  def guess_display
+    guess.split('').inject('') { |str, char| "#{str}#{char} " }
+  end
 
-    ind_array.each do |ind|
-      str_array[ind] = char
+  def update_guess
+    print "#{name}, enter your guess: "
+    input = gets.chomp
+    replace_chars(input) if word.count_chars.keys.include?(input)
+  end
+
+  def replace_chars(char)
+    char_ind = word.count_chars[char]
+    guess_arr = guess.split('')
+    char_ind.each do |ind|
+      guess_arr[ind] = char
     end
-    str_array.join('')
+    @guess = guess_arr.join('')
   end
 end
 
@@ -66,7 +78,7 @@ end
 
 # extending string to incorporate several specific methods
 class String
-  def char_index_map
+  def count_chars
     arr = split('')
     hash = {}
     arr.each_with_index do |char, ind|
