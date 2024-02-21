@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'yaml'
+
 # serves as the class that holds the game states
 class Game
   attr_accessor :round
@@ -17,15 +19,10 @@ class Game
     until round == 11 || player.guess == secret_word
       puts "Round #{round}:"
       puts "Mystery word: #{player.guess_display}\n\n"
-      player.update_guess
+      ask_input
       @round += 1
     end
-
-    if player.guess == secret_word
-      announce_winner
-    else
-      announce_death
-    end
+    endgame
   end
 
   def intro
@@ -35,6 +32,26 @@ class Game
     puts 'You can either guess a letter in the word, or the whole word itself.'
     puts 'If your letter guess is right, we will reveal to you where the letters reside in the word.'
     puts "If you choose to guess a word and you are able to guess correctly, you are free immediately.\n\n"
+  end
+
+  def ask_input
+    print "#{player.name}, enter your guess: "
+    input = gets.chomp.downcase
+    puts
+
+    if input == 'save'
+      Hangman.save(self)
+    else
+      player.update_guess(input)
+    end
+  end
+
+  def endgame
+    if player.guess == secret_word
+      announce_winner
+    else
+      announce_death
+    end
   end
 
   def announce_winner
@@ -67,10 +84,7 @@ class Player
     guess.split('').inject('') { |str, char| "#{str}#{char} " }
   end
 
-  def update_guess
-    print "#{name}, enter your guess: "
-    input = gets.chomp.downcase
-    puts
+  def update_guess(input)
     replace_chars(input) if word.count_chars.keys.include?(input)
     @guess = input if @word == input
   end
@@ -105,4 +119,51 @@ class String
   end
 end
 
-Game.new.play
+# the most class that handles pre-game interactions
+class Hangman
+  def self.play
+    game = ask_game
+    puts "Welcome back prisoner #{game.player.name}!\n\n" if game.round > 1
+    game.play
+  end
+
+  def self.ask_game
+    print 'Press 1 to start a new game, press 2 to load a saved game: '
+    input = gets.chomp
+    puts
+
+    if input == '1'
+      Game.new
+    elsif input == '2'
+      load_game
+    end
+  end
+
+  def self.load_game
+    filename = "saved_games/#{ask_loadfile}.yaml"
+    YAML.load_file(filename, permitted_classes: [Game, Player])
+  end
+
+  def self.ask_loadfile
+    print 'Enter your savefile name (case-sensitive) : '
+    gets.chomp
+  end
+
+  def self.save(game)
+    Dir.mkdir('saved_games') unless Dir.exist?('saved_games')
+
+    filename = "saved_games/#{ask_savefile}.yaml"
+
+    File.open(filename, 'w') do |file|
+      file.puts YAML.dump game
+    end
+    abort 'Game saved. Enter the same name to load game.'
+  end
+
+  def self.ask_savefile
+    print 'What do you want to name you savefile? (No spaces please) :'
+    gets.chomp
+  end
+end
+
+Hangman.play

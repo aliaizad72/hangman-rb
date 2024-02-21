@@ -1,0 +1,7 @@
+--- !ruby/object:Game
+secret_word: produce
+player: !ruby/object:Player
+  name: Ali
+  word: produce
+  guess: ___d__e
+round: 7
